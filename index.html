@@ -109,42 +109,6 @@ body {
 			<div id="status-notice"></div>
 		</div>
 
-		<script>
-// index.pck va partido en trozos (GitHub no acepta archivos de más de 100 MB).
-(function () {
-	const PARTES = ["index.pck.0", "index.pck.1", "index.pck.2"];
-	const TOTAL = 219487912;
-	const fetchOriginal = window.fetch.bind(window);
-	window.fetch = function (recurso, opciones) {
-		const url = typeof recurso === 'string' ? recurso : (recurso && recurso.url) || '';
-		if (!/(^|\/)index\.pck(\?|$)/.test(url)) {
-			return fetchOriginal(recurso, opciones);
-		}
-		let n = 0;
-		let lector = null;
-		const flujo = new ReadableStream({
-			async pull(control) {
-				while (true) {
-					if (!lector) {
-						if (n >= PARTES.length) { control.close(); return; }
-						const r = await fetchOriginal(PARTES[n++], { cache: 'no-cache' });
-						if (!r.ok) { control.error(new Error('No se pudo bajar ' + PARTES[n - 1])); return; }
-						lector = r.body.getReader();
-					}
-					const { done, value } = await lector.read();
-					if (done) { lector = null; continue; }
-					control.enqueue(value);
-					return;
-				}
-			}
-		});
-		return Promise.resolve(new Response(flujo, {
-			status: 200,
-			headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(TOTAL) }
-		}));
-	};
-})();
-</script>
 		<script src="index.js"></script>
 		<script>
 const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":219487912,"index.wasm":37902138},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
